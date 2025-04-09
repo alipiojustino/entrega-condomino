@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrega no Condomínio</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    img.logo {
+      width: 160px;
+      margin-bottom: 20px;
+    }
+
+    label, select, button {
+      margin: 10px 0;
+      display: block;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    select, button {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #007199;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005f7a;
+    }
+
+    #confirmarEntrega {
+      display: none;
+    }
+
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    /* RESPONSIVO */
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        padding: 15px;
+      }
+
+      label, select, button {
+        font-size: 15px;
+      }
+
+      img.logo {
+        width: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logo_alp.jpg" alt="Logo ALP" class="logo" />
+
+    <label for="bloco">Selecione o Bloco:</label>
+    <select id="bloco">
+      <option value="">-- Selecione --</option>
+      <option value="A1">Bloco A1</option>
+      <option value="A2">Bloco A2</option>
+      <option value="A3">Bloco A3</option>
+      <option value="B1">Bloco B1</option>
+    </select>
+
+    <label for="apartamento">Selecione o Apartamento:</label>
+    <select id="apartamento">
+      <option value="">-- Selecione --</option>
+      <option value="101">101</option>
+      <option value="102">102</option>
+      <option value="103">103</option>
+      <option value="104">104</option>
+      <option value="201">201</option>
+      <option value="202">202</option>
+      <option value="203">203</option>
+      <option value="204">204</option>
+    </select>
+
+    <button onclick="abrirGaveta()" id="btnIniciar" style="display:none;">Abrir Gaveta</button>
+    <button onclick="confirmarEntrega()" id="confirmarEntrega">Confirmar Entrega</button>
+
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const moradores = {
+      "A1-101": "6742038745"
+      // Adicione mais moradores aqui
+    };
+
+    const bloco = document.getElementById("bloco");
+    const apto = document.getElementById("apartamento");
+    const btnAbrir = document.getElementById("btnIniciar");
+    const btnConfirmar = document.getElementById("confirmarEntrega");
+    const status = document.getElementById("status");
+    let gavetaAberta = false;
+
+    bloco.addEventListener("change", verificarSelecao);
+    apto.addEventListener("change", verificarSelecao);
+
+    function verificarSelecao() {
+      if (bloco.value && apto.value) {
+        btnAbrir.style.display = "block";
+      } else {
+        btnAbrir.style.display = "none";
+        btnConfirmar.style.display = "none";
+      }
+    }
+
+    function abrirGaveta() {
+      alert("🔓 Gaveta aberta. Entregador pode colocar a encomenda.");
+      gavetaAberta = true;
+      btnConfirmar.style.display = "block";
+      btnAbrir.style.display = "none";
+    }
+
+    function confirmarEntrega() {
+      if (!gavetaAberta) {
+        alert("Você precisa abrir a gaveta antes.");
+        return;
+      }
+
+      const chave = `${bloco.value}-${apto.value}`;
+      const chatId = moradores[chave];
+
+      if (!chatId) {
+        status.innerText = "❌ Morador não cadastrado para esse bloco/ap.";
+        return;
+      }
+
+      const mensagem = "Olá! Sua encomenda chegou e está disponível para retirada na guarita.";
+
+      fetch("https://api.telegram.org/botSEU_TOKEN_AQUI/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: mensagem
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.ok) {
+            status.innerText = "✅ Entrega confirmada e morador notificado!";
+          } else {
+            status.innerText = "❌ Erro ao enviar notificação via Telegram.";
+          }
+        })
+        .catch(error => {
+          status.innerText = "❌ Erro ao enviar mensagem.";
+          console.error(error);
+        });
+    }
+  </script>
+</body>
+</html>
